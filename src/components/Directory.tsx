@@ -1,0 +1,487 @@
+'use client';
+
+import Link from 'next/link';
+import { useMemo, useCallback, useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Center } from '@/types';
+import MapWrapper from './MapWrapper';
+import { Search, Map as MapIcon, List as ListIcon, GraduationCap, Building, MapPin, ArrowRight, Navigation, Bookmark, Share2, X } from 'lucide-react';
+
+interface DirectoryProps {
+  initialCenters: Center[];
+}
+
+function deg2rad(deg: number): number {
+  return deg * (Math.PI / 180);
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
+
+export default function Directory({ initialCenters }: DirectoryProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Location State
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Primary filters
+  const query = searchParams.get('q') || '';
+  const zipCode = searchParams.get('zip') || '';
+  const selectedProvince = searchParams.get('prov') || '';
+  const selectedLevel = searchParams.get('level') || '';
+  const selectedTitularidad = searchParams.get('tit') || '';
+  
+  // FP Sub-filters
+  const cycleQuery = searchParams.get('cycleQ') || '';
+  const selectedFamily = searchParams.get('family') || '';
+  const selectedFpGrade = searchParams.get('fp') || '';
+  
+  const viewMode = (searchParams.get('view') as 'list' | 'map') || 'list';
+
+  // Helper to update URL params
+  const setParam = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    
+    // Clear FP subfilters if level changes from FP
+    if (key === 'level' && value !== 'FP') {
+      params.delete('fp');
+      params.delete('family');
+      params.delete('cycleQ');
+    }
+    
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  const clearAllFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    params.delete('zip');
+    params.delete('prov');
+    params.delete('level');
+    params.delete('tit');
+    params.delete('fp');
+    params.delete('family');
+    params.delete('cycleQ');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    setUserLocation(null); // Also clear location
+  }, [searchParams, pathname, router]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (query) count++;
+    if (zipCode) count++;
+    if (selectedProvince) count++;
+    if (selectedLevel) count++;
+    if (selectedTitularidad) count++;
+    if (userLocation) count++; // Consider location a filter
+    if (selectedLevel === 'FP') {
+      if (cycleQuery) count++;
+      if (selectedFamily) count++;
+      if (selectedFpGrade) count++;
+    }
+    return count;
+  }, [query, zipCode, selectedProvince, selectedLevel, selectedTitularidad, cycleQuery, selectedFamily, selectedFpGrade, userLocation]);
+
+  const allFamilies = useMemo(() => {
+    const families = new Set<string>();
+    initialCenters.forEach(center => {
+      center.fpCycles?.forEach(cycle => {
+        families.add(cycle.family);
+      });
+    });
+    return Array.from(families).sort();
+  }, [initialCenters]);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const shareData = {
+      title: 'InfoEduCV',
+      text: 'Mira esta búsqueda de centros educativos en InfoEduCV',
+      url: url
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Share canceled or failed', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('¡Enlace de tu búsqueda copiado al portapapeles!');
+      } catch (err) {
+        console.error('Failed to copy', err);
+      }
+    }
+  };
+
+  // Handle Location Click
+  const handleLocationClick = () => {
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización.");
+      return;
+    }
+
+    // If already located, click to clear
+    if (userLocation) {
+      setUserLocation(null);
+      return;
+    }
+    
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserLocation([lat, lng]);
+        
+        // Find closest center to determine province
+        let closestCenter = initialCenters[0];
+        let minDistance = Infinity;
+        
+        for (const center of initialCenters) {
+          const dist = calculateDistance(lat, lng, center.lat, center.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestCenter = center;
+          }
+        }
+        
+        // Automatically set province to the closest center's province
+        setParam('prov', closestCenter.province);
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error(error);
+        alert("Error al obtener la ubicación. Por favor, asegúrate de haber dado permiso de ubicación a la página web.");
+        setIsLocating(false);
+      },
+      { timeout: 10000 }
+    );
+  };
+
+  // Filter centers based on criteria
+  const filteredCenters = useMemo(() => {
+    let results = initialCenters.filter(center => {
+      const matchesQuery = 
+        center.name.toLowerCase().includes(query.toLowerCase()) ||
+        center.municipality.toLowerCase().includes(query.toLowerCase());
+      
+      const matchesZip = zipCode ? center.zipCode.includes(zipCode) : true;
+      const matchesProvince = selectedProvince ? center.province === selectedProvince : true;
+      const matchesLevel = selectedLevel ? center.levels.includes(selectedLevel) : true;
+      const matchesTitularidad = selectedTitularidad ? center.type.toLowerCase().includes(selectedTitularidad.toLowerCase()) : true;
+      
+      let matchesFp = true;
+      if (selectedLevel === 'FP') {
+        const hasCycles = center.fpCycles && center.fpCycles.length > 0;
+        
+        if (!hasCycles && (selectedFpGrade || selectedFamily || cycleQuery)) {
+          // If user applied FP subfilters but center has no cycle details, it shouldn't match
+          matchesFp = false;
+        } else if (hasCycles) {
+          matchesFp = center.fpCycles!.some(cycle => {
+            const mGrade = selectedFpGrade ? cycle.grade === selectedFpGrade : true;
+            const mFamily = selectedFamily ? cycle.family === selectedFamily : true;
+            const mName = cycleQuery ? cycle.name.toLowerCase().includes(cycleQuery.toLowerCase()) : true;
+            return mGrade && mFamily && mName;
+          });
+        }
+      }
+
+      return matchesQuery && matchesZip && matchesProvince && matchesLevel && matchesTitularidad && matchesFp;
+    });
+
+    if (userLocation) {
+      // Calculate distance and sort
+      results = results.map(center => ({
+        ...center,
+        distance: calculateDistance(userLocation[0], userLocation[1], center.lat, center.lng)
+      })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    }
+
+    return results.slice(0, 100); // Limit to 100 for performance in list/map
+  }, [initialCenters, query, zipCode, selectedProvince, selectedLevel, selectedTitularidad, cycleQuery, selectedFamily, selectedFpGrade, userLocation]);
+
+  const customSelectStyles = {
+    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+    backgroundPosition: 'right 0.75rem center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '1.5em 1.5em'
+  };
+
+  return (
+    <div className={`flex flex-col ${viewMode === 'map' ? 'h-[calc(100vh-80px)]' : 'min-h-[calc(100vh-80px)]'}`}>
+      {/* Search and Filters Bar */}
+      <div className="p-4 shrink-0 transition-colors z-10 relative bg-gray-50 dark:bg-[#030712]">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 dark:border-gray-800 p-6 transition-all">
+            {/* Decorative top border */}
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-700 via-primary-500 to-primary-300 dark:from-primary-600 dark:via-primary-500 dark:to-primary-400 rounded-t-2xl"></div>
+            <div className="flex flex-wrap gap-3 items-stretch">
+              <div className="relative flex-grow min-w-[200px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar centro..."
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white placeholder:text-gray-400"
+                  value={query}
+                  onChange={(e) => setParam('q', e.target.value)}
+                />
+              </div>
+              
+              <div className="relative w-full sm:w-36">
+                <input
+                  type="text"
+                  placeholder="Código postal"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white placeholder:text-gray-400"
+                  value={zipCode}
+                  onChange={(e) => setParam('zip', e.target.value)}
+                />
+              </div>
+              
+              <button 
+                onClick={handleLocationClick}
+                className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${userLocation ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400' : isLocating ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'} text-sm font-bold transition-colors whitespace-nowrap shadow-sm`}
+              >
+                <Navigation className={`w-4 h-4 ${isLocating ? 'animate-pulse' : ''}`} /> 
+                {isLocating ? 'Localizando...' : userLocation ? 'Ubicación activa' : 'Mi ubicación'}
+              </button>
+              
+              <button 
+                onClick={handleShare}
+                className="hidden sm:flex items-center justify-center w-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors shadow-sm"
+                title="Compartir esta búsqueda"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+
+              <div className="flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl transition-colors shrink-0">
+                <button
+                  onClick={() => setParam('view', 'list')}
+                  className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                >
+                  <ListIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setParam('view', 'map')}
+                  className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'map' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                >
+                  <MapIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Row 2: Categories */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-5">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-1.5">Provincia</label>
+                <select 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white appearance-none cursor-pointer"
+                  style={customSelectStyles}
+                  value={selectedProvince}
+                  onChange={(e) => setParam('prov', e.target.value)}
+                >
+                  <option value="">Todas las provincias</option>
+                  <option value="ALICANTE/ALACANT">Alicante</option>
+                  <option value="CASTELLÓN/CASTELLÓ">Castellón</option>
+                  <option value="VALENCIA/VALÈNCIA">Valencia</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-1.5">Tipo</label>
+                <select 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white appearance-none cursor-pointer"
+                  style={customSelectStyles}
+                  value={selectedLevel}
+                  onChange={(e) => setParam('level', e.target.value)}
+                >
+                  <option value="">Todos los niveles</option>
+                  <option value="Infantil">Infantil</option>
+                  <option value="Primaria">Primaria</option>
+                  <option value="ESO">ESO</option>
+                  <option value="Bachillerato">Bachillerato</option>
+                  <option value="FP">Formación Profesional</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-1.5">Titularidad</label>
+                <select 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white appearance-none cursor-pointer"
+                  style={customSelectStyles}
+                  value={selectedTitularidad}
+                  onChange={(e) => setParam('tit', e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  <option value="Público">Público</option>
+                  <option value="Privado">Privado</option>
+                  <option value="Concertado">Concertado</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Row 3: FP Sub-menu */}
+            {selectedLevel === 'FP' && (
+              <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800 animate-fade-in-up">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-600 dark:text-amber-500 tracking-wider uppercase mb-1.5">Nombre del ciclo</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500 dark:text-amber-500" />
+                      <input 
+                        type="text" 
+                        placeholder="Ej: Desarrollo Web" 
+                        className="w-full pl-9 pr-4 py-3 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-900/10 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all font-medium text-gray-900 dark:text-white placeholder:text-amber-400 dark:placeholder:text-amber-700" 
+                        value={cycleQuery} 
+                        onChange={(e) => setParam('cycleQ', e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-600 dark:text-amber-500 tracking-wider uppercase mb-1.5">Familia</label>
+                    <select 
+                      className="w-full px-4 py-3 rounded-xl border-2 border-amber-500 bg-amber-50/30 dark:bg-amber-900/20 text-sm outline-none focus:ring-4 focus:ring-amber-500/20 transition-all font-bold text-amber-900 dark:text-amber-300 appearance-none cursor-pointer"
+                      style={{ backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%23f59e0b\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                      value={selectedFamily}
+                      onChange={(e) => setParam('family', e.target.value)}
+                    >
+                      <option value="">Todas</option>
+                      {allFamilies.map(family => (
+                        <option key={family} value={family}>{family}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-600 dark:text-amber-500 tracking-wider uppercase mb-1.5">Nivel</label>
+                    <select 
+                      className="w-full px-4 py-3 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-900/10 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all font-medium text-gray-900 dark:text-white appearance-none cursor-pointer"
+                      style={{ backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%23fbbf24\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                      value={selectedFpGrade}
+                      onChange={(e) => setParam('fp', e.target.value)}
+                    >
+                      <option value="">Todos</option>
+                      <option value="FP Básica">FP Básica</option>
+                      <option value="Grado Medio">Grado Medio</option>
+                      <option value="Grado Superior">Grado Superior</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Clear filters row */}
+            {activeFiltersCount > 0 && (
+              <div className="mt-4 flex justify-center animate-fade-in-up">
+                <button 
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-gray-600 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-bold transition-colors"
+                >
+                  Eliminar {activeFiltersCount} {activeFiltersCount === 1 ? 'filtro' : 'filtros'} <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className={`flex-grow flex bg-gray-50 dark:bg-[#030712] transition-colors ${viewMode === 'map' ? 'overflow-hidden' : ''}`}>
+        <div className="max-w-7xl mx-auto w-full h-full p-4 flex">
+          {viewMode === 'list' ? (
+            <div className="w-full pb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCenters.map(center => (
+                  <div key={center.id} className="group relative bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.05)] hover:border-primary-700 dark:hover:border-primary-500 transition-[box-shadow,background-color,border-color] duration-300 flex flex-col h-full animate-fade-in-up">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-700 via-primary-500 to-primary-300 dark:from-primary-600 dark:via-primary-500 dark:to-primary-400"></div>
+                    
+                    <div className="p-6 flex-grow flex flex-col pt-7">
+                      <div className="flex justify-between items-start mb-4">
+                         <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 flex items-center gap-1">
+                           <Building className="w-3 h-3" />
+                           {center.type}
+                         </span>
+                         
+                         {center.distance !== undefined && (
+                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1 border border-green-200 dark:border-green-800">
+                             <Navigation className="w-3 h-3" />
+                             {center.distance < 1 ? Math.round(center.distance * 1000) + ' m' : center.distance.toFixed(1) + ' km'}
+                           </span>
+                         )}
+                      </div>
+                      
+                      <div className="mb-5 flex flex-col justify-center min-h-[4rem]">
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors line-clamp-2 tracking-tight leading-none">{center.name}</h3>
+                      </div>
+                      
+                      <div className="space-y-3 mb-6 flex-grow">
+                        <div className="flex items-start gap-3 text-gray-600 dark:text-gray-400 group/item">
+                          <div className="p-1.5 bg-primary-700 dark:bg-primary-600 rounded-md shrink-0 mt-0.5 shadow-sm">
+                            <MapPin className="w-4 h-4 text-white" />
+                          </div>
+                          <p className="text-[15px] font-medium leading-relaxed line-clamp-2">
+                            <span className="font-bold text-primary-700 dark:text-primary-400 block text-xs uppercase tracking-wider mb-0.5 opacity-80">Ubicación</span>
+                            {center.municipality} <span className="text-gray-400 dark:text-gray-500 font-normal">({center.province.split('/')[0]})</span>
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex flex-wrap gap-2">
+                          {center.levels.map(lvl => (
+                            <span key={lvl} className="px-2.5 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-semibold rounded-md border border-primary-100 dark:border-primary-800/50 shadow-sm">
+                              {lvl === 'FP' ? 'Form. Profesional' : lvl}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 group-hover:bg-white dark:group-hover:bg-gray-900 transition-colors mt-auto">
+                      <Link href={`/centro/${center.id}`} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold bg-primary-700 dark:bg-primary-600 text-white shadow-lg shadow-primary-700/20 dark:shadow-primary-900/30 hover:shadow-primary-700/40 hover:-translate-y-0.5 transition-all duration-200">
+                        Explorar centro
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+                {filteredCenters.length === 0 && (
+                  <div className="col-span-full py-20 text-center text-gray-500 dark:text-gray-400">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <GraduationCap className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No se encontraron centros</h3>
+                    <p>Prueba a cambiar los filtros de búsqueda.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800 transition-colors animate-fade-in-up">
+              <MapWrapper centers={filteredCenters} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

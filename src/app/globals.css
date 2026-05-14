@@ -1,26 +1,141 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #f0f7f9;
+  --color-primary-100: #dbeaf0;
+  --color-primary-200: #b9d5e1;
+  --color-primary-300: #8bbbd0;
+  --color-primary-400: #569ab5;
+  --color-primary-500: #357e9b;
+  --color-primary-600: #2a6580;
+  --color-primary-700: #114b5f;
+  --color-primary-800: #1e3b4a;
+  --color-primary-900: #1c333e;
+  --color-primary-950: #0e1f28;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #030712;
+    --foreground: #f9fafb;
   }
 }
 
+:root[class~="dark"] {
+  --background: #030712;
+  --foreground: #f9fafb;
+}
+
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Fix leaflet map z-index to not overlap with standard Next.js headers */
+.leaflet-container {
+  z-index: 10;
+}
+.leaflet-top, .leaflet-bottom {
+  z-index: 10 !important;
+}
+
+/* Premium Map Popup Overrides (Leaflet) */
+.premium-popup-container .leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  overflow: hidden !important;
+  border: 1px solid #e5e7eb;
+  width: 90vw !important;
+  max-width: 400px !important;
+}
+
+.dark .premium-popup-container .leaflet-popup-content-wrapper {
+  border-color: #374151; /* gray-700 */
+}
+
+.premium-popup-container .leaflet-popup-content {
+  margin: 0 !important;
+  width: 100% !important;
+  padding: 0 !important;
+  min-width: 100% !important; /* Ensure content stretches */
+}
+
+.premium-popup-container a.leaflet-popup-close-button {
+  display: none !important;
+}
+
+.premium-popup-container .leaflet-popup-tip {
+  background: white;
+}
+
+.dark .premium-popup-container .leaflet-popup-tip {
+  background: #111827; /* gray-900 */
+}
+
+/* Leaflet dark mode overrides */
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background-color: #111827; /* gray-900 */
+  color: #f9fafb;
+}
+
+/* Ensure the map tiles look a bit darker to match dark mode */
+.dark .leaflet-layer,
+.dark .leaflet-control-zoom-in,
+.dark .leaflet-control-zoom-out,
+.dark .leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
