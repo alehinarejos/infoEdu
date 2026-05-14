@@ -3,7 +3,7 @@ import { getCenters } from '@/lib/api';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Cambia esta URL por tu dominio real cuando lances la web
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://infoeducv.es';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://info-edu-cv.vercel.app';
   
   // Obtenemos todos los centros de la GVA
   const centers = await getCenters();

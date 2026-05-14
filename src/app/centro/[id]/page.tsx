@@ -29,6 +29,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       title: `${center.name} - Centro Educativo en ${center.municipality}`,
       description: description,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${center.name} - InfoEdu CV`,
+      description: description,
+    },
+    alternates: {
+      canonical: `/centro/${id}`,
     }
   };
 }

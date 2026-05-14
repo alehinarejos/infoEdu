@@ -278,12 +278,16 @@ export default function Directory({ initialCenters }: DirectoryProps) {
                 <button
                   onClick={() => setParam('view', 'list')}
                   className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                  aria-label="Ver en modo lista"
+                  title="Vista de lista"
                 >
                   <ListIcon className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setParam('view', 'map')}
                   className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'map' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                  aria-label="Ver en modo mapa"
+                  title="Vista de mapa"
                 >
                   <MapIcon className="h-4 w-4" />
                 </button>
