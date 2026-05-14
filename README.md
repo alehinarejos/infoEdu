@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InfoEdu Comunitat Valenciana
 
-## Getting Started
+Aplicación web interactiva para buscar, filtrar y localizar **centros educativos y oferta de Formación Profesional (FP)** en la Comunitat Valenciana. Los datos provienen del portal de Dades Obertes de la Generalitat Valenciana.
 
-First, run the development server:
+---
+
+## ✨ Funcionalidades
+
+- **Búsqueda de centros** por nombre, municipio o código
+- **Filtros combinados** por provincia (Alicante, Castellón, Valencia), tipo de centro (Público, Privado, Concertado) y nivel educativo (Infantil, Primaria, ESO, Bachillerato, FP)
+- **Vista de lista y mapa interactivo** con marcadores georreferenciados (Leaflet + OpenStreetMap)
+- **Página de detalle** de cada centro con información de contacto, oferta educativa y mapa centrado
+- Diseño **responsive** optimizado para móvil, tablet y escritorio
+
+---
+
+## 🛠️ Stack tecnológico
+
+| Tecnología | Uso |
+|---|---|
+| [Next.js](https://nextjs.org) (App Router) | Framework principal |
+| TypeScript | Lenguaje |
+| Tailwind CSS | Estilos y diseño responsive |
+| Leaflet + react-leaflet | Mapas interactivos (OpenStreetMap) |
+| lucide-react | Iconografía |
+| JSON estático | Datos de centros (procesados desde GVA) |
+
+---
+
+## 🚀 Instalación y uso
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Estructura del proyecto
 
-## Learn More
+```
+infoEdu/
+├── public/
+│   └── data/          # JSONs con datos de centros educativos
+├── src/
+│   ├── app/           # Páginas y rutas (Next.js App Router)
+│   ├── components/    # Componentes reutilizables (filtros, mapa, tarjetas...)
+│   └── lib/           # Utilidades y helpers
+├── scripts/           # Scripts de procesamiento de datos GVA
+└── CLAUDE.md          # Contexto para agentes de IA
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📊 Datos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Los datos de centros docentes se obtienen del [portal de Dades Obertes de la GVA](https://dadesobertes.gva.es), se procesan mediante un script Node.js y se almacenan como JSON estático para garantizar el máximo rendimiento y disponibilidad sin dependencias externas en tiempo de ejecución.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📋 Roadmap
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [x] Estructura base y configuración del proyecto
+- [x] Procesamiento y normalización de datos GVA
+- [ ] Componentes de búsqueda y filtros
+- [ ] Vista de lista de resultados
+- [ ] Integración del mapa con clusters
+- [ ] Página de detalle de centro
+- [ ] Optimización y testing responsive
+
+---
+
+## 📄 Licencia
+
+Este proyecto utiliza datos abiertos de la Generalitat Valenciana bajo licencia [Creative Commons BY 4.0](https://creativecommons.org/licenses/by/4.0/).
