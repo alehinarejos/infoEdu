@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎓 InfoEdu CV
 
-## Getting Started
+**InfoEdu CV** es una plataforma moderna e interactiva diseñada para facilitar la búsqueda, filtrado y localización de centros educativos y oferta de Formación Profesional (FP) en la **Comunitat Valenciana** (Valencia, Alicante y Castellón).
 
-First, run the development server:
+## 🚀 Misión del Proyecto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+El objetivo principal de InfoEdu CV es democratizar el acceso a la información educativa pública. Utilizando datos abiertos de la **Generalitat Valenciana (GVA)**, transformamos listados complejos en una experiencia visual intuitiva que ayuda a familias y estudiantes a tomar mejores decisiones sobre su futuro académico.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Características Principales
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 🔍 **Buscador Avanzado:** Encuentra centros por nombre, municipio o código.
+- 📍 **Mapa Interactivo:** Visualiza la ubicación exacta de los colegios e institutos mediante Leaflet.
+- 🎭 **Filtros Dinámicos:** Filtra resultados por provincia, tipo de centro (Público, Privado, Concertado) y niveles educativos (Infantil, Primaria, ESO, Bachillerato, FP).
+- 📱 **Diseño Responsive:** Optimizado para su uso en dispositivos móviles, tablets y ordenadores.
+- 🌙 **Modo Oscuro/Claro:** Interfaz adaptable a las preferencias del usuario.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Stack Tecnológico
 
-## Learn More
+- **Framework:** [Next.js](https://nextjs.org/) (React) con App Router.
+- **Estilos:** [Tailwind CSS](https://tailwindcss.com/) para una UI moderna y fluida.
+- **Mapas:** [Leaflet](https://leafletjs.com/) y `react-leaflet`.
+- **Iconos:** [Lucide React](https://lucide.dev/).
+- **Fuentes:** Inter (vía Google Fonts).
 
-To learn more about Next.js, take a look at the following resources:
+## 📋 Desarrollo Local
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1.  **Instalación de dependencias:**
+    ```bash
+    npm install
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2.  **Ejecutar el servidor de desarrollo:**
+    ```bash
+    npm run dev
+    ```
 
-## Deploy on Vercel
+3.  **Abrir en el navegador:**
+    Visita [http://localhost:3000](http://localhost:3000) para ver el resultado.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Este proyecto ha sido desarrollado utilizando estándares modernos de desarrollo web, priorizando el rendimiento, la accesibilidad y la experiencia de usuario (UX).
