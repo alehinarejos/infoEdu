@@ -12,7 +12,7 @@ export interface Center {
   zipCode: string;
   municipality: string;
   province: string;
-  phone: string;
+  phone?: string;
   lat: number;
   lng: number;
   levels: string[];

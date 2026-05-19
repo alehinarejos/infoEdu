@@ -4,8 +4,17 @@ import Link from 'next/link';
 import { useMemo, useCallback, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Center } from '@/types';
-import MapWrapper from './MapWrapper';
+import dynamic from 'next/dynamic';
 import { Search, Map as MapIcon, List as ListIcon, GraduationCap, Building, MapPin, ArrowRight, Navigation, Bookmark, Share2, X } from 'lucide-react';
+
+const MapWrapper = dynamic(() => import('./MapWrapper'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full bg-gray-100 dark:bg-gray-900 animate-pulse rounded-lg flex items-center justify-center">
+      <span className="text-gray-400 font-bold">Cargando mapa...</span>
+    </div>
+  )
+});
 
 interface DirectoryProps {
   initialCenters: Center[];
