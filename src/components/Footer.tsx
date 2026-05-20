@@ -134,7 +134,7 @@ export default function Footer() {
             <Heart className="w-3.5 h-3.5 text-red-500 animate-heartbeat fill-red-500 inline-block mx-0.5" />
             <span>por</span>
             <a
-              href="https://github.com/alehinarejos"
+              href="https://portfolio-alehinarejos.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-gray-700 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors underline decoration-gray-300 dark:decoration-gray-700 underline-offset-2"
