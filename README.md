@@ -1,4 +1,7 @@
-<<<<<<< HEAD
+# 🚀 Instalación y uso
+
+Enlace del proyecto: https://info-edu-cv.vercel.app/
+
 # 🎓 InfoEdu CV
 
 **InfoEdu CV** es una plataforma moderna e interactiva diseñada para facilitar la búsqueda, filtrado y localización de centros educativos y oferta de Formación Profesional (FP) en la **Comunitat Valenciana** (Valencia, Alicante y Castellón).
