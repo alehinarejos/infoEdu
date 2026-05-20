@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Center } from '@/types';
 import dynamic from 'next/dynamic';
@@ -59,6 +59,11 @@ export default function Directory({ initialCenters }: DirectoryProps) {
   
   const viewMode = (searchParams.get('view') as 'list' | 'map') || 'list';
 
+  // Local states for text inputs (immediate binding for smooth typing)
+  const [localQuery, setLocalQuery] = useState(query);
+  const [localZipCode, setLocalZipCode] = useState(zipCode);
+  const [localCycleQuery, setLocalCycleQuery] = useState(cycleQuery);
+
   // Helper to update URL params
   const setParam = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -77,6 +82,47 @@ export default function Directory({ initialCenters }: DirectoryProps) {
     
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
+
+  // Efectos de debounce para actualizar la URL solo tras 250ms de inactividad al teclear
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localQuery !== query) {
+        setParam('q', localQuery);
+      }
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [localQuery, query, setParam]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localZipCode !== zipCode) {
+        setParam('zip', localZipCode);
+      }
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [localZipCode, zipCode, setParam]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localCycleQuery !== cycleQuery) {
+        setParam('cycleQ', localCycleQuery);
+      }
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [localCycleQuery, cycleQuery, setParam]);
+
+  // Sincronizar estados locales cuando cambian los valores de la URL externamente (ej: al limpiar filtros)
+  useEffect(() => {
+    setLocalQuery(query);
+  }, [query]);
+
+  useEffect(() => {
+    setLocalZipCode(zipCode);
+  }, [zipCode]);
+
+  useEffect(() => {
+    setLocalCycleQuery(cycleQuery);
+  }, [cycleQuery]);
 
   const clearAllFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -252,8 +298,8 @@ export default function Directory({ initialCenters }: DirectoryProps) {
                   type="text"
                   placeholder="Buscar centro..."
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white placeholder:text-gray-400"
-                  value={query}
-                  onChange={(e) => setParam('q', e.target.value)}
+                  value={localQuery}
+                  onChange={(e) => setLocalQuery(e.target.value)}
                 />
               </div>
               
@@ -262,8 +308,8 @@ export default function Directory({ initialCenters }: DirectoryProps) {
                   type="text"
                   placeholder="Código postal"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-medium text-gray-900 dark:text-white placeholder:text-gray-400"
-                  value={zipCode}
-                  onChange={(e) => setParam('zip', e.target.value)}
+                  value={localZipCode}
+                  onChange={(e) => setLocalZipCode(e.target.value)}
                 />
               </div>
               
@@ -365,8 +411,8 @@ export default function Directory({ initialCenters }: DirectoryProps) {
                         type="text" 
                         placeholder="Ej: Desarrollo Web" 
                         className="w-full pl-9 pr-4 py-3 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-900/10 focus:bg-white dark:focus:bg-gray-900 text-sm outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all font-medium text-gray-900 dark:text-white placeholder:text-amber-400 dark:placeholder:text-amber-700" 
-                        value={cycleQuery} 
-                        onChange={(e) => setParam('cycleQ', e.target.value)} 
+                        value={localCycleQuery} 
+                        onChange={(e) => setLocalCycleQuery(e.target.value)} 
                       />
                     </div>
                   </div>

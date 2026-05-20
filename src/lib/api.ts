@@ -6,7 +6,20 @@ import { cache } from 'react';
 const CENTROS_URL = 'https://dadesobertes.gva.es/dataset/68eb1d94-76d3-4305-8507-e1aab7717d0e/resource/1aa53c3a-4639-41aa-ac85-d58254c428c0/download/centros-docentes-de-la-comunitat-valenciana.csv';
 const FP_URL = 'https://dadesobertes.gva.es/dataset/a2183efe-f62c-48ec-bdbe-22a4b63c3832/resource/79af67de-71a2-48b1-bd6d-57a2996e2669/download/alumnos-matriculados-fp_2025.csv';
 
+// Variables globales para caché en memoria (sobrevive en la instancia del contenedor de Vercel)
+let cachedCenters: Center[] | null = null;
+let lastFetchTime = 0;
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+
 export const getCenters = cache(async (): Promise<Center[]> => {
+  const now = Date.now();
+  if (cachedCenters && (now - lastFetchTime < CACHE_TTL)) {
+    console.log("⚡ [CACHE SERVIDOR] Retornando centros educativos desde memoria caché");
+    return cachedCenters;
+  }
+
+  console.log("🌐 [FETCH SERVIDOR] Descargando y procesando nuevos datos de GVA");
+
   // Fetch FP data
   const fpResponse = await fetch(FP_URL, { next: { revalidate: 86400 } });
   if (!fpResponse.ok) {
@@ -113,6 +126,10 @@ export const getCenters = cache(async (): Promise<Center[]> => {
       .on('end', resolve)
       .on('error', reject);
   });
+
+  cachedCenters = results;
+  lastFetchTime = Date.now();
+  console.log(`✅ [CACHE SERVIDOR] Guardados ${results.length} centros en caché de memoria`);
 
   return results;
 });
