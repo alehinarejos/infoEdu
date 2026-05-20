@@ -22,18 +22,38 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = `${center.type} ubicado en ${center.municipality} (${center.province.split('/')[0]}). ${nivelesStr}${fpStr} Consulta dirección, teléfono y más detalles en InfoEdu CV.`;
 
   return {
-    title: `${center.name} en ${center.municipality}`,
+    title: `${center.name} en ${center.municipality} | InfoEdu CV`,
     description: description,
-    keywords: [center.name, `colegios en ${center.municipality}`, `institutos en ${center.municipality}`, center.type, "educación", center.province.split('/')[0], ...(center.levels || [])],
+    keywords: [
+      center.name,
+      `colegio ${center.name}`,
+      `instituto ${center.name}`,
+      `colegios en ${center.municipality}`,
+      `institutos en ${center.municipality}`,
+      `info edu cv ${center.name}`,
+      center.type,
+      "educación GVA",
+      center.province.split('/')[0],
+      ...(center.levels || [])
+    ],
     openGraph: {
       title: `${center.name} - Centro Educativo en ${center.municipality}`,
       description: description,
       type: "website",
+      images: [
+        {
+          url: '/logo.png',
+          width: 1200,
+          height: 630,
+          alt: `${center.name} - InfoEdu CV`,
+        }
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${center.name} - InfoEdu CV`,
       description: description,
+      images: ['/logo.png'],
     },
     alternates: {
       canonical: `/centro/${id}`,
@@ -86,6 +106,8 @@ export default async function CentroPage({ params }: { params: Promise<{ id: str
     "@type": "EducationalOrganization",
     "name": center.name,
     "description": `${center.type} en ${center.municipality}`,
+    "image": "https://info-edu-cv.vercel.app/logo.png",
+    "logo": "https://info-edu-cv.vercel.app/logo.png",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": center.address,

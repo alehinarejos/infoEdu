@@ -21,11 +21,35 @@ export const metadata: Metadata = {
     template: "%s | Guía de Centros InfoEdu CV"
   },
   description: "Buscador oficial de colegios públicos, concertados y privados en Valencia, Alicante y Castellón. Encuentra toda la oferta de FP, Institutos y centros educativos de la GVA con mapa interactivo.",
-  keywords: ["colegios valencia", "institutos alicante", "fp castellon", "formación profesional comunitat valenciana", "centros educativos gva", "educación infantil", "bachillerato valencia"],
+  keywords: [
+    "info edu cv",
+    "infoeducv",
+    "info edu",
+    "colegios valencia",
+    "institutos alicante",
+    "fp castellon",
+    "formación profesional comunitat valenciana",
+    "centros educativos gva",
+    "educación infantil",
+    "bachillerato valencia",
+    "colegios comunidad valenciana",
+    "institutos comunidad valenciana"
+  ],
   authors: [{ name: "InfoEdu CV" }],
   metadataBase: new URL('https://info-edu-cv.vercel.app'),
   alternates: {
     canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   openGraph: {
     title: "InfoEdu CV | Encuentra el mejor centro educativo en la Comunitat Valenciana",
@@ -33,12 +57,21 @@ export const metadata: Metadata = {
     siteName: "InfoEdu CV",
     locale: "es_ES",
     type: "website",
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'InfoEdu CV | Buscador de Centros Educativos de la Comunitat Valenciana',
+      }
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "InfoEdu CV | Guía de Centros Educativos de la Comunitat Valenciana",
     description: "Buscador de colegios e institutos de la GVA. Filtros por provincia, nivel y titularidad con localización exacta.",
     creator: "@infoeducv",
+    images: ['/logo.png'],
   },
   icons: {
     icon: '/icon.ico',
